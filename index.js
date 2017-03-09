@@ -34,16 +34,12 @@ export default class Carousel extends Component {
     arrows: React.PropTypes.bool,
     arrowsContainerStyle: Text.propTypes.style,
     arrowstyle: Text.propTypes.style,
-    leftArrowText: React.propTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.element,
-    ]),
-    rightArrowText: React.propTypes.oneOfType([
-      React.PropTypes.string,
-      React.PropTypes.element,
-    ]),
+    leftArrowText: React.PropTypes.string,
+    rightArrowText: React.PropTypes.string,
     chosenBulletStyle: Text.propTypes.style,
     onAnimateNextPage: React.PropTypes.func,
+    height: React.PropTypes.number,
+    width: React.PropTypes.number,
   };
 
   static defaultProps = {
@@ -67,6 +63,8 @@ export default class Carousel extends Component {
     leftArrowText: '',
     rightArrowText: '',
     onAnimateNextPage: undefined,
+    height: -1,
+    width: -1,
   };
 
   constructor(props) {
@@ -95,6 +93,9 @@ export default class Carousel extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    if (nextProps.width > 0 && nextProps.width !== this.state.width) {
+      this._scrollTo(this.props.width * this.state.currentPage, false);
+    }
     let childrenLength = 0;
     if (nextProps.children) {
       childrenLength = nextProps.children.length ? nextProps.children.length : 1;
@@ -125,12 +126,19 @@ export default class Carousel extends Component {
   }
 
   _onLayout = () => {
-    this.container.measure((x, y, w, h) => {
+    if (this.props.height > 0 && this.props.width > 0) {
       this.setState({
-        size: { width: w, height: h },
+        size: { width: this.props.width, height: this.props.height },
       });
       this._placeCritical(this.state.currentPage);
-    });
+    } else {
+      this.container.measure((x, y, w, h) => {
+        this.setState({
+          size: { width: w, height: h },
+        });
+        this._placeCritical(this.state.currentPage);
+      });
+    }
   }
 
   _clearTimer = () => {
@@ -274,8 +282,6 @@ export default class Carousel extends Component {
       // so we add first and second page again to the end
       pages.push(children[0]);
       pages.push(children[1]);
-    } else if (children.length === 1) {
-      pages.push(children[0]);
     } else if (children) {
       pages.push(children);
     } else {
